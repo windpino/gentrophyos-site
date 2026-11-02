@@ -14,11 +14,19 @@ import {
   HelpCircle,
   Building,
   ShieldCheck,
+  Loader2,
+  AlertCircle,
+  Database,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
+import { submitInquiry } from "@/lib/inquiries";
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [savedDocId, setSavedDocId] = useState("");
+  const [isSimulated, setIsSimulated] = useState(false);
   const [formData, setFormData] = useState({
     orgName: "",
     eventName: "",
@@ -30,9 +38,25 @@ export default function ContactSection() {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const result = await submitInquiry(formData);
+      if (result.success) {
+        setSubmitted(true);
+        setSavedDocId(result.id || "");
+        setIsSimulated(Boolean(result.isSimulated));
+      } else {
+        setErrorMessage(result.error || "문의 접수 중 오류가 발생했습니다. 다시 시도해 주세요.");
+      }
+    } catch (err: unknown) {
+      setErrorMessage("서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const faqs = [
@@ -193,7 +217,7 @@ export default function ContactSection() {
 
                 {submitted ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mb-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mb-4 animate-in zoom-in-75 duration-300">
                       <CheckCircle2 className="h-8 w-8" />
                     </div>
                     <h4 className="text-xl font-black text-white">
@@ -202,16 +226,44 @@ export default function ContactSection() {
                     <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-md">
                       담당자가 신청 내역을 확인한 후, 기재해 주신 연락처와 이메일로 대회 맞춤형 제안서와 과업명세서 초안을 빠르게 전달드리겠습니다.
                     </p>
+
+                    <div className="mt-4 flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3.5 py-1.5 text-xs text-slate-400">
+                      <Database className="h-3.5 w-3.5 text-[#F4C430]" />
+                      <span>
+                        {isSimulated
+                          ? "데이터 동기화 완료 (로컬 세션)"
+                          : `Firebase Cloud Firestore 저장 완료 (ID: ${savedDocId.slice(0, 8)}...)`}
+                      </span>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => setSubmitted(false)}
-                      className="mt-6 rounded-full bg-white/10 px-6 py-2 text-xs font-bold text-white hover:bg-white/20"
+                      onClick={() => {
+                        setSubmitted(false);
+                        setFormData({
+                          orgName: "",
+                          eventName: "",
+                          name: "",
+                          phone: "",
+                          email: "",
+                          scale: "100~300명",
+                          serviceType: "full-package",
+                          message: "",
+                        });
+                      }}
+                      className="mt-6 rounded-full bg-white/10 px-6 py-2 text-xs font-bold text-white hover:bg-white/20 transition-colors"
                     >
                       다른 문의 작성하기
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {errorMessage && (
+                      <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-300">
+                        <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                        <span>{errorMessage}</span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-bold text-slate-300 block mb-1.5">
@@ -335,10 +387,20 @@ export default function ContactSection() {
 
                     <button
                       type="submit"
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F4C430] via-amber-400 to-amber-500 py-3.5 text-sm font-black text-[#0B1E3B] shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-[0.99] transition-all"
+                      disabled={isSubmitting}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F4C430] via-amber-400 to-amber-500 py-3.5 text-sm font-black text-[#0B1E3B] shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Send className="h-4 w-4" />
-                      <span>도입 상담 및 견적 신청하기</span>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>데이터베이스 전송 중...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          <span>도입 상담 및 견적 신청하기</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 )}
