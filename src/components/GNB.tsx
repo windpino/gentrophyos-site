@@ -10,12 +10,11 @@ export default function GNB() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // 각 메뉴별 독립 전용 라우트
+  // 각 메뉴별 독립 전용 라우트 (성공사례는 추후 사례 누적 시 활성화)
   const navLinks = [
     { label: "홈", href: "/" },
     { label: "서비스 소개", href: "/service" },
     { label: "기능 안내", href: "/features" },
-    { label: "성공사례", href: "/references" },
     { label: "고객센터", href: "/contact" },
   ];
 

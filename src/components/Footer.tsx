@@ -27,7 +27,6 @@ export default function Footer() {
               <li><Link href="/" className="hover:text-[#F4C430] transition-colors">홈</Link></li>
               <li><Link href="/service" className="hover:text-[#F4C430] transition-colors">서비스 소개</Link></li>
               <li><Link href="/features" className="hover:text-[#F4C430] transition-colors">기능 안내</Link></li>
-              <li><Link href="/references" className="hover:text-[#F4C430] transition-colors">성공사례</Link></li>
               <li><Link href="/contact" className="hover:text-[#F4C430] transition-colors">고객센터</Link></li>
             </ul>
           </div>
